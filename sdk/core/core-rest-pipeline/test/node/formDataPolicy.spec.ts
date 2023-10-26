@@ -10,7 +10,6 @@ import {
   createPipelineRequest,
   formDataPolicy,
 } from "../../src";
-import { streamToText } from "./util";
 
 describe("formDataPolicy", function () {
   afterEach(function () {
@@ -94,11 +93,13 @@ describe("formDataPolicy", function () {
     assert.isUndefined(result.request.formData);
     const body = result.request.body as any;
     assert.ok(body, "expecting valid body");
-    const text = await streamToText(body);
-    console.log(text);
+    assert.ok((body as any)["getBuffer"], "expecting valid getBuffer() member");
+    const buffer = (body as any)["getBuffer"]();
+    const text = buffer.toString("utf8");
+    assert.ok(text, "expecting valid text represetntation");
     assert.match(
       text,
-      /(-+)(.+)\r\nContent-Disposition: form-data; name="a"\r\n\r\nva\r\n(-+)(.+)\r\nContent-Disposition: form-data; name="b"\r\n\r\nvb\r\n(-+)(.+)--\r\n/
+      /(-+)(\d+)\r\nContent-Disposition: form-data; name="a"\r\n\r\nva\r\n(-+)(\d+)\r\nContent-Disposition: form-data; name="b"\r\n\r\nvb\r\n(-+)(\d+)--\r\n/
     );
   });
 });

@@ -8,8 +8,6 @@
 
 ### Bugs Fixed
 
-- Update the form data policy to be spec compliant and to support fixing the boundary.
-
 ### Other Changes
 
 ## 1.12.2 (2023-10-23)

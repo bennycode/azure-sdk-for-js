@@ -128,9 +128,7 @@ export type FormDataMap = {
 };
 
 // @public
-export function formDataPolicy(options?: {
-    boundary?: string;
-}): PipelinePolicy;
+export function formDataPolicy(): PipelinePolicy;
 
 // @public
 export const formDataPolicyName = "formDataPolicy";
