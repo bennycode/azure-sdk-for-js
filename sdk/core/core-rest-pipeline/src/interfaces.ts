@@ -48,6 +48,76 @@ export interface HttpHeaders extends Iterable<[string, string]> {
 }
 
 /**
+ * An interface representing a blob.
+ *
+ * `Blob` and `File` objects satisfy this interface, but a ReadableStream (web or Node) can be
+ * used instead by creating an object with the `stream` property set to the stream.
+ */
+export interface BlobLike {
+  /**
+   * A stream (or a function that returns a stream) representing the blob's contents.
+   */
+  stream: ReadableStream | NodeJS.ReadableStream | (() => ReadableStream | NodeJS.ReadableStream);
+
+  /**
+   * The MIME type of the blob.
+   */
+  type?: string;
+
+  /**
+   * The size of the blob.
+   */
+  size?: number;
+}
+
+/**
+ * An interface representing a file to be uploaded.
+ * The `File` class satisfies this interface, allowing for instances to be passed directly. If the file to be
+ * uploaded is not represented by a `File` or `Blob`, an object containing a stream and optional file type and file name
+ * can be used instead.
+ */
+export interface FileLike extends BlobLike {
+  /**
+   * The name of the file. If no file name is present, a placeholder name of 'blob' will be used when submitting a form
+   * containing the file.
+   */
+  name?: string;
+}
+
+/**
+ * A part of the request body in a multipart request.
+ */
+export interface BodyPart {
+  /**
+   * The headers for this part of the multipart request.
+   */
+  headers: HttpHeaders;
+
+  /**
+   * The body of this multipart request.
+   */
+  body: ReadableStream | NodeJS.ReadableStream | Uint8Array | BlobLike;
+}
+
+/**
+ * A request body consisting of multiple parts.
+ */
+export interface MultipartRequestBody {
+  /**
+   * The parts of the request body.
+   */
+  parts: BodyPart[];
+
+  /**
+   * The boundary separating each part of the request body.
+   * If not specified, a random boundary will be generated.
+   *
+   * When specified, '--' will be prepended to the boundary in the request to ensure the boundary follows the specification.
+   */
+  boundary?: string;
+}
+
+/**
  * Types of bodies supported on the request.
  * NodeJS.ReadableStream and () =\> NodeJS.ReadableStream is Node only.
  * Blob, ReadableStream<Uint8Array>, and () =\> ReadableStream<Uint8Array> are browser only.
@@ -61,6 +131,7 @@ export type RequestBodyType =
   | ArrayBuffer
   | ArrayBufferView
   | FormData
+  | MultipartRequestBody
   | string
   | null;
 
@@ -310,9 +381,9 @@ export interface ProxySettings {
 }
 
 /**
- * Each form data entry can be a string or (in the browser) a Blob.
+ * Each form data entry can be a string or a file-like object (includes Blob or File in the browser)
  */
-export type FormDataValue = string | Blob;
+export type FormDataValue = string | FileLike;
 
 /**
  * A simple object that provides form data, as if from a browser form.

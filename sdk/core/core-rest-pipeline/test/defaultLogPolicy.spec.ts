@@ -34,6 +34,7 @@ describe("defaultLogPolicy", function () {
     const expectedOrderedPolicies = isNode ? ["proxyPolicy", "decompressResponsePolicy"] : [];
     expectedOrderedPolicies.push(
       "formDataPolicy",
+      "multipartPolicy",
       "userAgentPolicy",
       "setClientRequestIdPolicy",
       "defaultRetryPolicy",

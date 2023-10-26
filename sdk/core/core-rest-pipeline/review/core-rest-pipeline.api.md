@@ -76,6 +76,19 @@ export interface BearerTokenAuthenticationPolicyOptions {
 }
 
 // @public
+export interface BlobLike {
+    size?: number;
+    stream: ReadableStream | NodeJS.ReadableStream | (() => ReadableStream | NodeJS.ReadableStream);
+    type?: string;
+}
+
+// @public
+export interface BodyPart {
+    body: ReadableStream | NodeJS.ReadableStream | Uint8Array | BlobLike;
+    headers: HttpHeaders;
+}
+
+// @public
 export interface ChallengeCallbacks {
     authorizeRequest?(options: AuthorizeRequestOptions): Promise<void>;
     authorizeRequestOnChallenge?(options: AuthorizeRequestOnChallengeOptions): Promise<boolean>;
@@ -123,6 +136,11 @@ export interface ExponentialRetryPolicyOptions {
 }
 
 // @public
+export interface FileLike extends BlobLike {
+    name?: string;
+}
+
+// @public
 export type FormDataMap = {
     [key: string]: FormDataValue | FormDataValue[];
 };
@@ -134,7 +152,7 @@ export function formDataPolicy(): PipelinePolicy;
 export const formDataPolicyName = "formDataPolicy";
 
 // @public
-export type FormDataValue = string | Blob;
+export type FormDataValue = string | FileLike;
 
 // @public
 export function getDefaultProxySettings(proxyUrl?: string): ProxySettings | undefined;
@@ -183,6 +201,18 @@ export interface LogPolicyOptions {
     additionalAllowedHeaderNames?: string[];
     additionalAllowedQueryParameters?: string[];
     logger?: Debugger;
+}
+
+// @public
+export function multipartPolicy(): PipelinePolicy;
+
+// @public
+export const multipartPolicyName = "multipartPolicy";
+
+// @public
+export interface MultipartRequestBody {
+    boundary?: string;
+    parts: BodyPart[];
 }
 
 // @public
@@ -326,7 +356,7 @@ export interface RedirectPolicyOptions {
 }
 
 // @public
-export type RequestBodyType = NodeJS.ReadableStream | (() => NodeJS.ReadableStream) | ReadableStream<Uint8Array> | (() => ReadableStream<Uint8Array>) | Blob | ArrayBuffer | ArrayBufferView | FormData | string | null;
+export type RequestBodyType = NodeJS.ReadableStream | (() => NodeJS.ReadableStream) | ReadableStream<Uint8Array> | (() => ReadableStream<Uint8Array>) | Blob | ArrayBuffer | ArrayBufferView | FormData | MultipartRequestBody | string | null;
 
 // @public
 export class RestError extends Error {
