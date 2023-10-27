@@ -11,9 +11,15 @@ import {
   formDataPolicy,
 } from "../src";
 import { isMultipartRequestBody } from "../src/policies/multipartPolicy";
-import { BlobLike, BodyPart, FormDataMap, MultipartRequestBody } from "../src/interfaces";
+import {
+  BodyPart,
+  FormDataMap,
+  InMemoryBlob,
+  MultipartRequestBody,
+  StreamableBlob,
+} from "../src/interfaces";
 import { isNode } from "@azure/core-util";
-import { isBlobLike, isNodeReadableStream } from "../src/util/stream";
+import { isBlobLike, isInMemoryBlob, isNodeReadableStream } from "../src/util/typeGuards";
 import { Readable } from "stream";
 
 describe("formDataPolicy", function () {
@@ -97,15 +103,41 @@ describe("formDataPolicy", function () {
       return policy.sendRequest(request, next);
     }
 
+    it("throws if request.body is already present", async function () {
+      const request = createPipelineRequest({
+        url: "https://bing.com",
+        headers: createHttpHeaders({
+          "Content-Type": "multipart/form-data",
+        }),
+        formData: {},
+        body: "AAAAAAAAAAAA",
+      });
+      const successResponse: PipelineResponse = {
+        headers: createHttpHeaders(),
+        request,
+        status: 200,
+      };
+      const next = sinon.stub<Parameters<SendRequest>, ReturnType<SendRequest>>();
+      next.resolves(successResponse);
+
+      const policy = formDataPolicy();
+
+      assert.isRejected(
+        policy.sendRequest(request, next),
+        /multipart\/form-data request must not have a request body already specified/
+      );
+    });
+
     it("prepares a form with multiple fields correctly", async function () {
-      const result = await performRequest({ a: "va", b: "vb" });
+      // add field with spooky unicode characters to ensure encoding is working
+      const result = await performRequest({ a: "va", b: "vb", c: "👻👻" });
       assert.isUndefined(result.request.formData);
       const body = result.request.body as any;
       assert.ok(body, "expecting valid body");
       assert.ok(isMultipartRequestBody(body), "expecting body to be MultipartRequestBody");
       const parts = (body as any).parts as BodyPart[];
       const enc = new TextEncoder();
-      assert.ok(parts.length === 2, "need 2 parts");
+      assert.ok(parts.length === 3, "need 3 parts");
       assert.deepEqual(parts[0], {
         headers: createHttpHeaders({
           "Content-Disposition": `form-data; name="a"`,
@@ -117,6 +149,12 @@ describe("formDataPolicy", function () {
           "Content-Disposition": `form-data; name="b"`,
         }),
         body: enc.encode("vb"),
+      });
+      assert.deepEqual(parts[2], {
+        headers: createHttpHeaders({
+          "Content-Disposition": `form-data; name="c"`,
+        }),
+        body: enc.encode("👻👻"),
       });
     });
 
@@ -196,15 +234,40 @@ describe("formDataPolicy", function () {
           })
         );
         assert.ok(isBlobLike(parts[0].body));
-        assert.ok(isNodeReadableStream((parts[0].body as BlobLike).stream));
+        assert.ok(isNodeReadableStream((parts[0].body as StreamableBlob).stream));
 
         const buffers: Buffer[] = [];
-        for await (const part of (parts[0].body as BlobLike).stream as NodeJS.ReadableStream) {
+        for await (const part of (parts[0].body as StreamableBlob)
+          .stream as NodeJS.ReadableStream) {
           buffers.push(part as Buffer);
         }
 
         const content = Buffer.concat(buffers);
         assert.deepEqual([...content], [...Buffer.from("aaa")]);
+      });
+
+      it("can upload a Uint8Array", async function () {
+        const result = await performRequest({
+          file: {
+            content: new Uint8Array([0x01, 0x02, 0x03]),
+            name: "file.bin",
+            type: "text/plain",
+          },
+        });
+
+        const parts = (result.request.body as MultipartRequestBody).parts;
+        assert.ok(parts.length === 1, "expected 1 part");
+        assert.deepEqual(
+          parts[0].headers,
+          createHttpHeaders({
+            "Content-Type": "text/plain",
+            "Content-Disposition": `form-data; name="file"; filename="file.bin"`,
+          })
+        );
+        assert.ok(isInMemoryBlob(parts[0].body));
+
+        const content = (parts[0].body as InMemoryBlob).content;
+        assert.deepEqual([...content], [0x01, 0x02, 0x03]);
       });
     });
   });

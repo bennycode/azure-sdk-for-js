@@ -11,14 +11,17 @@ import {
   RequestBodyType,
 } from "../interfaces";
 import { PipelinePolicy } from "../pipeline";
-import { concatenateStreams, isBlobLike, toStream } from "../util/stream";
+import { toStream, concatenateStreams } from "../util/stream";
+import { isInMemoryBlob, isStreamableBlob } from "../util/typeGuards";
 
 function generateBoundary(): string {
   return `----AzSDKFormBoundary${randomUUID()}`;
 }
 
 function encodeHeaders(headers: HttpHeaders): string {
-  return [...headers].map(([name, value]) => `${name}: ${value}\r\n`).join("");
+  return Array.from(headers)
+    .map(([name, value]) => `${name}: ${value}\r\n`)
+    .join("");
 }
 
 function getLength(
@@ -26,8 +29,10 @@ function getLength(
 ): number | undefined {
   if (source instanceof Uint8Array) {
     return source.byteLength;
-  } else if (isBlobLike(source)) {
+  } else if (isStreamableBlob(source)) {
     return source.size;
+  } else if (isInMemoryBlob(source)) {
+    return source.content.byteLength;
   } else {
     return undefined;
   }
@@ -69,16 +74,34 @@ function buildRequestBody(request: PipelineRequest, parts: BodyPart[], boundary:
   request.body = concatenateStreams(sources.map(toStream));
 }
 
+/**
+ * Check if this request body is a multipart body
+ */
 export function isMultipartRequestBody(
   body: RequestBodyType | undefined
 ): body is MultipartRequestBody {
-  return Boolean(body && Array.isArray((body as MultipartRequestBody).parts));
+  return Boolean(body && (body as MultipartRequestBody).bodyType === "mimeMultipart");
 }
 
 /**
  * Name of multipart policy
  */
 export const multipartPolicyName = "multipartPolicy";
+
+const maxBoundaryLength = 70;
+const validBoundaryCharacters = new Set(
+  `abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'()+,-./:=?`
+);
+
+function assertValidBoundary(boundary: string): void {
+  if (boundary.length > maxBoundaryLength) {
+    throw new Error(`Multipart boundary "${boundary}" exceeds maximum length of 70 characters`);
+  }
+
+  if (Array.from(boundary).some((x) => !validBoundaryCharacters.has(x))) {
+    throw new Error(`Multipart boundary "${boundary}" contains invalid characters`);
+  }
+}
 
 /**
  * Pipeline policy for multipart requests
@@ -93,36 +116,27 @@ export function multipartPolicy(): PipelinePolicy {
 
       let boundary = request.body.boundary;
 
-      const contentTypeHeader = request.headers.get("Content-Type");
-      if (contentTypeHeader) {
-        const parsedHeader = contentTypeHeader.match(/^(multipart\/[^ ;]+)(?:; *boundary=(.+))?$/);
-        if (!parsedHeader) {
-          throw new Error(
-            `Got multipart request body, but content-type header was not multipart: ${contentTypeHeader}`
-          );
-        }
-
-        const parsedContentType = parsedHeader[1];
-        const parsedBoundary = parsedHeader[2];
-
-        if (parsedBoundary) {
-          if (boundary && boundary !== parsedBoundary) {
-            throw new Error(
-              `Multipart boundary was specified as ${parsedBoundary} in the header, but got ${boundary} in the request body`
-            );
-          } else {
-            boundary = parsedBoundary;
-          }
-        } else {
-          boundary ??= generateBoundary();
-          request.headers.set("Content-Type", `${parsedContentType}; boundary=${boundary}`);
-        }
-      } else {
-        boundary ??= generateBoundary();
-        request.headers.set("Content-Type", `multipart/mixed; boundary=${boundary}`);
+      let contentTypeHeader = request.headers.get("Content-Type") ?? "multipart/mixed";
+      const parsedHeader = contentTypeHeader.match(/^(multipart\/[^ ;]+)(?:; *boundary=(.+))?$/);
+      if (!parsedHeader) {
+        throw new Error(
+          `Got multipart request body, but content-type header was not multipart: ${contentTypeHeader}`
+        );
       }
 
+      const contentType = parsedHeader[1];
+      const parsedBoundary = parsedHeader[2];
+      if (parsedBoundary && boundary && parsedBoundary !== boundary) {
+        throw new Error(
+          `Multipart boundary was specified as ${parsedBoundary} in the header, but got ${boundary} in the request body`
+        );
+      }
+
+      boundary ??= parsedBoundary ?? generateBoundary();
+      assertValidBoundary(boundary);
+      request.headers.set("Content-Type", `${contentType}; boundary=${boundary}`);
       buildRequestBody(request, request.body.parts, boundary);
+
       return next(request);
     },
   };

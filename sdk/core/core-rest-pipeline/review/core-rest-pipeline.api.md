@@ -76,11 +76,7 @@ export interface BearerTokenAuthenticationPolicyOptions {
 }
 
 // @public
-export interface BlobLike {
-    size?: number;
-    stream: ReadableStream | NodeJS.ReadableStream | (() => ReadableStream | NodeJS.ReadableStream);
-    type?: string;
-}
+export type BlobLike = StreamableBlob | InMemoryBlob;
 
 // @public
 export interface BodyPart {
@@ -136,9 +132,9 @@ export interface ExponentialRetryPolicyOptions {
 }
 
 // @public
-export interface FileLike extends BlobLike {
+export type FileLike = BlobLike & {
     name?: string;
-}
+};
 
 // @public
 export type FormDataMap = {
@@ -177,9 +173,18 @@ export interface HttpHeaders extends Iterable<[string, string]> {
 export type HttpMethods = "GET" | "PUT" | "POST" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS" | "TRACE";
 
 // @public
+export interface InMemoryBlob {
+    content: Uint8Array;
+    type?: string;
+}
+
+// @public
 export interface InternalPipelineOptions extends PipelineOptions {
     loggingOptions?: LogPolicyOptions;
 }
+
+// @public
+export function isMultipartRequestBody(body: RequestBodyType | undefined): body is MultipartRequestBody;
 
 // @public
 export function isRestError(e: unknown): e is RestError;
@@ -211,6 +216,7 @@ export const multipartPolicyName = "multipartPolicy";
 
 // @public
 export interface MultipartRequestBody {
+    bodyType: "mimeMultipart";
     boundary?: string;
     parts: BodyPart[];
 }
@@ -417,6 +423,13 @@ export function setClientRequestIdPolicy(requestIdHeaderName?: string): Pipeline
 
 // @public
 export const setClientRequestIdPolicyName = "setClientRequestIdPolicy";
+
+// @public
+export interface StreamableBlob {
+    size?: number;
+    stream: ReadableStream | NodeJS.ReadableStream | (() => ReadableStream | NodeJS.ReadableStream);
+    type?: string;
+}
 
 // @public
 export function systemErrorRetryPolicy(options?: SystemErrorRetryPolicyOptions): PipelinePolicy;
