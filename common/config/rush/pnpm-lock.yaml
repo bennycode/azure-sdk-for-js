@@ -1477,20 +1477,15 @@ packages:
       '@azure/msal-common': 13.3.0
     dev: false
 
-  /@azure/msal-browser@3.2.0:
-    resolution: {integrity: sha512-le2qutddMiq0i3ErQaLKuwP1DpNgdd9iXPs3fSCsLuBrdGg9B4/j4ArCAHCwgxA82Ydj9BcqtMIL5BSWwU+P5A==}
+  /@azure/msal-browser@3.5.0:
+    resolution: {integrity: sha512-2NtMuel4CI3UEelCPKkNRXgKzpWEX48fvxIvPz7s0/sTcCaI08r05IOkH2GkXW+czUOtuY6+oGafJCpumnjRLg==}
     engines: {node: '>=0.8.0'}
     dependencies:
-      '@azure/msal-common': 14.1.0
+      '@azure/msal-common': 14.4.0
     dev: false
 
   /@azure/msal-common@13.3.0:
     resolution: {integrity: sha512-/VFWTicjcJbrGp3yQP7A24xU95NiDMe23vxIU1U6qdRPFsprMDNUohMudclnd+WSHE4/McqkZs/nUU3sAKkVjg==}
-    engines: {node: '>=0.8.0'}
-    dev: false
-
-  /@azure/msal-common@14.1.0:
-    resolution: {integrity: sha512-xphmhcfl5VL+uq5//VKMwQn+wfEZLMKNpFCcMi8Ur8ej5UT166g6chBsxgMzc9xo9Y24R9FB3m/tjDiV03xMIA==}
     engines: {node: '>=0.8.0'}
     dev: false
 
@@ -4704,7 +4699,7 @@ packages:
     dependencies:
       semver: 7.5.4
       shelljs: 0.8.5
-      typescript: 5.4.0-dev.20231107
+      typescript: 5.4.0-dev.20231108
     dev: false
 
   /eastasianwidth@0.2.0:
@@ -5751,7 +5746,7 @@ packages:
       fs.realpath: 1.0.0
       minimatch: 8.0.4
       minipass: 4.2.8
-      path-scurry: 1.6.3
+      path-scurry: 1.10.1
     dev: false
 
   /global@4.4.0:
@@ -9537,8 +9532,8 @@ packages:
     hasBin: true
     dev: false
 
-  /typescript@5.4.0-dev.20231107:
-    resolution: {integrity: sha512-4bQlfsyFjzZMo1bSLEkFJEcvuQ64pgE0S/BpdWu16lYsQOfJZtntZIyWdED3h+e96IMtVgrC6sxzfPZhj4J/dw==}
+  /typescript@5.4.0-dev.20231108:
+    resolution: {integrity: sha512-/DNtrqpbir9XaRxE6qwjhB94pCZzw/9R/PhB8309frJBEBGZ5qSDqstl7YYbhWbqs+zWpCCbwBjWDGlz8wn8GA==}
     engines: {node: '>=14.17'}
     hasBin: true
     dev: false
@@ -19810,7 +19805,7 @@ packages:
     dev: false
 
   file:projects/identity-broker.tgz:
-    resolution: {integrity: sha512-1EQgUHTo2pxMnzMt8wmVj+9+ni14V68oPkB45xFtgi9SzfZEFwZ9toqSKiDl5Fj82EurHUi+6SXGkeODluyZsA==, tarball: file:projects/identity-broker.tgz}
+    resolution: {integrity: sha512-m9BYVQT/Ks8myBDiWGnwSuzLQbQcfNVzTiz/3zDKlwjg+jRLBJJmOEPQxGKHFyBrfRvAL8n6DcdnzZLzSKuWdw==, tarball: file:projects/identity-broker.tgz}
     name: '@rush-temp/identity-broker'
     version: 0.0.0
     dependencies:
@@ -19840,7 +19835,7 @@ packages:
     dev: false
 
   file:projects/identity-cache-persistence.tgz:
-    resolution: {integrity: sha512-6/Buwo0UgJdZ34X/JJeAQyBSmWzYkwYjG+AnVp/Y70PujbVvS2bcJ9bpqPTcJtKIUA1pMpYggaAIUJIDDcPFpQ==, tarball: file:projects/identity-cache-persistence.tgz}
+    resolution: {integrity: sha512-6wgdHnbzT3B4hCVA+X3TuuWckkGj3G3GXUWhRN3zpTAy8e32QvABcprEg1j/w3FFJtU9vKGhcsQ/BYhNKU0gWw==, tarball: file:projects/identity-cache-persistence.tgz}
     name: '@rush-temp/identity-cache-persistence'
     version: 0.0.0
     dependencies:
@@ -19914,12 +19909,12 @@ packages:
     dev: false
 
   file:projects/identity.tgz:
-    resolution: {integrity: sha512-7w/yCSz4VET1HuSAfg+XO7cXS7KcDXH1ridmSXNjp1Tz7GkMwAbXkMwPBfZ8wd7M23tA6Nnmcn/RbIw/HPmNSg==, tarball: file:projects/identity.tgz}
+    resolution: {integrity: sha512-IPjnny32LYta9mTFQeE24vuFuY3Y6mg6ls7c7Ph8jb2FPcAPS6jT8iqS3NuMTnlpgKU4SCddtAcbJZKJZLYcFw==, tarball: file:projects/identity.tgz}
     name: '@rush-temp/identity'
     version: 0.0.0
     dependencies:
       '@azure/keyvault-keys': 4.7.2
-      '@azure/msal-browser': 3.2.0
+      '@azure/msal-browser': 3.5.0
       '@azure/msal-common': 13.3.0
       '@azure/msal-node': 2.5.1
       '@microsoft/api-extractor': 7.38.0(@types/node@18.18.6)
@@ -20931,7 +20926,7 @@ packages:
     dev: false
 
   file:projects/openai.tgz:
-    resolution: {integrity: sha512-gGJHtPR163r+MmSIIJULYIjEGztW48LvlAOYFILjU08ne+WV/5+nPo4t8/cI4IQoyCv3rn7L1l0F/ujqPLo1Ug==, tarball: file:projects/openai.tgz}
+    resolution: {integrity: sha512-DM/ltZMaspkPsMSmG+UxmVERFFy3qpSoutbuCpT4OMsRQASLaLpj+lDaEx/tm+c24tdsr5purTlNPvETuvZbuQ==, tarball: file:projects/openai.tgz}
     name: '@rush-temp/openai'
     version: 0.0.0
     dependencies:
