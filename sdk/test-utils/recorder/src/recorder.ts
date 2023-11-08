@@ -4,7 +4,6 @@
 import {
   createDefaultHttpClient,
   HttpClient,
-  isMultipartRequestBody,
   isRestError,
   PipelinePolicy,
   PipelineRequest,
@@ -30,12 +29,12 @@ import { handleEnvSetup } from "./utils/envSetupForPlayback";
 import { CustomMatcherOptions, Matcher, setMatcher } from "./matcher";
 import { addTransform, Transform } from "./transform";
 import { createRecordingRequest } from "./utils/createRecordingRequest";
-import { AdditionalPolicyConfig } from "@azure/core-client";
 import { logger } from "./log";
 import { setRecordingOptions } from "./options";
 import { isNode } from "@azure/core-util";
 import { env } from "./utils/env";
 import { decodeBase64 } from "./utils/encoding";
+import { AdditionalPolicyConfig } from "@azure/core-client";
 
 /**
  * This client manages the recorder life cycle and interacts with the proxy-tool to do the recording,
@@ -410,20 +409,21 @@ export class Recorder {
    *
    * Note: Client Options must have "additionalPolicies" as part of the options.
    */
-  public configureClientOptions<T>(
-    options: T & { additionalPolicies?: AdditionalPolicyConfig[] }
-  ): T & { additionalPolicies?: AdditionalPolicyConfig[] } {
+  public configureClientOptions<
+    T,
+    U extends { position: "perCall" | "perRetry"; policy: unknown } = AdditionalPolicyConfig
+  >(options: T & { additionalPolicies?: U[] }): T & { additionalPolicies?: U[] } {
     if (isLiveMode()) return options;
     if (!options.additionalPolicies) options.additionalPolicies = [];
 
     options.additionalPolicies.push({
       policy: this.fixedMultipartBoundaryPolicy(),
       position: "perCall",
-    });
+    } as U);
     options.additionalPolicies.push({
       policy: this.recorderHttpPolicy(),
       position: "perRetry",
-    });
+    } as U);
     return options;
   }
 
@@ -471,8 +471,8 @@ export class Recorder {
     return {
       name: "fixedMultipartBoundaryPolicy",
       sendRequest: (request: PipelineRequest, next: SendRequest): Promise<PipelineResponse> => {
-        if (isMultipartRequestBody(request.body)) {
-          request.body.boundary = "--RecordedTestMultipartBoundary";
+        if (request.multipartBody) {
+          request.multipartBody.boundary = "--RecordedTestMultipartBoundary";
           const contentType = request.headers.get("Content-Type");
           if (contentType) {
             const contentTypeWithoutBoundary = contentType.split(";")[0];

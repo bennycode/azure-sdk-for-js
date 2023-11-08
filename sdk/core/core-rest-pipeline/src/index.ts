@@ -3,15 +3,12 @@
 
 export {
   Agent,
-  BlobLike,
   BodyPart,
-  FileLike,
   FormDataMap,
   FormDataValue,
   HttpClient,
   HttpHeaders,
   HttpMethods,
-  InMemoryBlob,
   KeyObject,
   MultipartRequestBody,
   PipelineRequest,
@@ -23,7 +20,6 @@ export {
   RawHttpHeadersInput,
   RequestBodyType,
   SendRequest,
-  StreamableBlob,
   TlsSettings,
   TransferProgressEvent,
 } from "./interfaces";
@@ -58,11 +54,7 @@ export {
   setClientRequestIdPolicyName,
 } from "./policies/setClientRequestIdPolicy";
 export { logPolicy, logPolicyName, LogPolicyOptions } from "./policies/logPolicy";
-export {
-  isMultipartRequestBody,
-  multipartPolicy,
-  multipartPolicyName,
-} from "./policies/multipartPolicy";
+export { multipartPolicy, multipartPolicyName } from "./policies/multipartPolicy";
 export { proxyPolicy, proxyPolicyName, getDefaultProxySettings } from "./policies/proxyPolicy";
 export {
   redirectPolicy,
@@ -104,3 +96,9 @@ export {
   AuxiliaryAuthenticationHeaderPolicyOptions,
   auxiliaryAuthenticationHeaderPolicyName,
 } from "./policies/auxiliaryAuthenticationHeaderPolicy";
+export {
+  createFile,
+  createFileFromStream,
+  CreateFileOptions,
+  CreateFileFromStreamOptions,
+} from "./util/file";

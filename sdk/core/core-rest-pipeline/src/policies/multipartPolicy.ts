@@ -2,44 +2,38 @@
 // Licensed under the MIT license.
 
 import { randomUUID, stringToUint8Array } from "@azure/core-util";
-import {
-  BlobLike,
-  BodyPart,
-  HttpHeaders,
-  MultipartRequestBody,
-  PipelineRequest,
-  RequestBodyType,
-} from "../interfaces";
+import { BodyPart, HttpHeaders, PipelineRequest } from "../interfaces";
 import { PipelinePolicy } from "../pipeline";
 import { toStream, concatenateStreams } from "../util/stream";
-import { isInMemoryBlob, isStreamableBlob } from "../util/typeGuards";
+import { isBlob } from "../util/typeGuards";
 
 function generateBoundary(): string {
   return `----AzSDKFormBoundary${randomUUID()}`;
 }
 
 function encodeHeaders(headers: HttpHeaders): string {
-  return Array.from(headers)
-    .map(([name, value]) => `${name}: ${value}\r\n`)
-    .join("");
+  let result = "";
+  for (const [key, value] of headers) {
+    result += `${key}: ${value}\r\n`;
+  }
+  return result;
 }
 
 function getLength(
-  source: Uint8Array | BlobLike | ReadableStream | NodeJS.ReadableStream
+  source: Uint8Array | Blob | ReadableStream | NodeJS.ReadableStream
 ): number | undefined {
   if (source instanceof Uint8Array) {
     return source.byteLength;
-  } else if (isStreamableBlob(source)) {
-    return source.size;
-  } else if (isInMemoryBlob(source)) {
-    return source.content.byteLength;
+  } else if (isBlob(source)) {
+    // if was created using createFile then -1 means we have an unknown size
+    return source.size === -1 ? undefined : source.size;
   } else {
     return undefined;
   }
 }
 
 function getTotalLength(
-  sources: (Uint8Array | BlobLike | ReadableStream | NodeJS.ReadableStream)[]
+  sources: (Uint8Array | Blob | ReadableStream | NodeJS.ReadableStream)[]
 ): number | undefined {
   let total = 0;
   for (const source of sources) {
@@ -75,15 +69,6 @@ function buildRequestBody(request: PipelineRequest, parts: BodyPart[], boundary:
 }
 
 /**
- * Check if this request body is a multipart body
- */
-export function isMultipartRequestBody(
-  body: RequestBodyType | undefined
-): body is MultipartRequestBody {
-  return Boolean(body && (body as MultipartRequestBody).bodyType === "mimeMultipart");
-}
-
-/**
  * Name of multipart policy
  */
 export const multipartPolicyName = "multipartPolicy";
@@ -110,13 +95,17 @@ export function multipartPolicy(): PipelinePolicy {
   return {
     name: multipartPolicyName,
     sendRequest(request, next) {
-      if (!isMultipartRequestBody(request.body)) {
+      if (!request.multipartBody) {
         return next(request);
       }
 
-      let boundary = request.body.boundary;
+      if (request.body) {
+        throw new Error("multipartBody and regular body cannot be set at the same time");
+      }
 
-      let contentTypeHeader = request.headers.get("Content-Type") ?? "multipart/mixed";
+      let boundary = request.multipartBody.boundary;
+
+      const contentTypeHeader = request.headers.get("Content-Type") ?? "multipart/mixed";
       const parsedHeader = contentTypeHeader.match(/^(multipart\/[^ ;]+)(?:; *boundary=(.+))?$/);
       if (!parsedHeader) {
         throw new Error(
@@ -124,18 +113,23 @@ export function multipartPolicy(): PipelinePolicy {
         );
       }
 
-      const contentType = parsedHeader[1];
-      const parsedBoundary = parsedHeader[2];
+      const [, contentType, parsedBoundary] = parsedHeader;
       if (parsedBoundary && boundary && parsedBoundary !== boundary) {
         throw new Error(
           `Multipart boundary was specified as ${parsedBoundary} in the header, but got ${boundary} in the request body`
         );
       }
 
-      boundary ??= parsedBoundary ?? generateBoundary();
-      assertValidBoundary(boundary);
+      boundary ??= parsedBoundary;
+      if (boundary) {
+        assertValidBoundary(boundary);
+      } else {
+        boundary = generateBoundary();
+      }
       request.headers.set("Content-Type", `${contentType}; boundary=${boundary}`);
-      buildRequestBody(request, request.body.parts, boundary);
+      buildRequestBody(request, request.multipartBody.parts, boundary);
+
+      request.multipartBody = undefined;
 
       return next(request);
     },

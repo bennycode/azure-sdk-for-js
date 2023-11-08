@@ -1,6 +1,6 @@
 {
   "name": "@azure/openai",
-  "version": "1.0.0-beta.7",
+  "version": "1.0.0-beta.8",
   "description": "An isomorphic client library for Azure OpenAI.",
   "sdk-type": "client",
   "main": "dist/index.cjs",
@@ -140,7 +140,6 @@
     "@azure/core-lro": "^2.5.3",
     "@azure/core-rest-pipeline": "^1.12.3",
     "@azure/logger": "^1.0.3",
-    "formdata-node": "^6.0.0",
     "tslib": "^2.4.0"
   },
   "//sampleConfiguration": {

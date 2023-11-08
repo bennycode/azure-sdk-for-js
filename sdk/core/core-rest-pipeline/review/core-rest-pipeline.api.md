@@ -76,11 +76,8 @@ export interface BearerTokenAuthenticationPolicyOptions {
 }
 
 // @public
-export type BlobLike = StreamableBlob | InMemoryBlob;
-
-// @public
 export interface BodyPart {
-    body: ReadableStream | NodeJS.ReadableStream | Uint8Array | BlobLike;
+    body: ReadableStream | NodeJS.ReadableStream | Uint8Array | Blob;
     headers: HttpHeaders;
 }
 
@@ -95,6 +92,24 @@ export function createDefaultHttpClient(): HttpClient;
 
 // @public
 export function createEmptyPipeline(): Pipeline;
+
+// @public
+export function createFile(content: Uint8Array, name: string, options?: CreateFileOptions): File;
+
+// @public
+export function createFileFromStream(stream: () => ReadableStream<Uint8Array> | NodeJS.ReadableStream, name: string, options?: CreateFileFromStreamOptions): File;
+
+// @public
+export interface CreateFileFromStreamOptions extends CreateFileOptions {
+    size?: number;
+}
+
+// @public
+export interface CreateFileOptions {
+    lastModified?: number;
+    type?: string;
+    webkitRelativePath?: string;
+}
 
 // @public
 export function createHttpHeaders(rawHeaders?: RawHttpHeadersInput): HttpHeaders;
@@ -132,11 +147,6 @@ export interface ExponentialRetryPolicyOptions {
 }
 
 // @public
-export type FileLike = BlobLike & {
-    name?: string;
-};
-
-// @public
 export type FormDataMap = {
     [key: string]: FormDataValue | FormDataValue[];
 };
@@ -148,7 +158,7 @@ export function formDataPolicy(): PipelinePolicy;
 export const formDataPolicyName = "formDataPolicy";
 
 // @public
-export type FormDataValue = string | FileLike;
+export type FormDataValue = string | Blob | File;
 
 // @public
 export function getDefaultProxySettings(proxyUrl?: string): ProxySettings | undefined;
@@ -173,18 +183,9 @@ export interface HttpHeaders extends Iterable<[string, string]> {
 export type HttpMethods = "GET" | "PUT" | "POST" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS" | "TRACE";
 
 // @public
-export interface InMemoryBlob {
-    content: Uint8Array;
-    type?: string;
-}
-
-// @public
 export interface InternalPipelineOptions extends PipelineOptions {
     loggingOptions?: LogPolicyOptions;
 }
-
-// @public
-export function isMultipartRequestBody(body: RequestBodyType | undefined): body is MultipartRequestBody;
 
 // @public
 export function isRestError(e: unknown): e is RestError;
@@ -216,7 +217,6 @@ export const multipartPolicyName = "multipartPolicy";
 
 // @public
 export interface MultipartRequestBody {
-    bodyType: "mimeMultipart";
     boundary?: string;
     parts: BodyPart[];
 }
@@ -269,6 +269,7 @@ export interface PipelineRequest {
     formData?: FormDataMap;
     headers: HttpHeaders;
     method: HttpMethods;
+    multipartBody?: MultipartRequestBody;
     onDownloadProgress?: (progress: TransferProgressEvent) => void;
     onUploadProgress?: (progress: TransferProgressEvent) => void;
     proxySettings?: ProxySettings;
@@ -291,6 +292,7 @@ export interface PipelineRequestOptions {
     formData?: FormDataMap;
     headers?: HttpHeaders;
     method?: HttpMethods;
+    multipartBody?: MultipartRequestBody;
     onDownloadProgress?: (progress: TransferProgressEvent) => void;
     onUploadProgress?: (progress: TransferProgressEvent) => void;
     proxySettings?: ProxySettings;
@@ -362,7 +364,7 @@ export interface RedirectPolicyOptions {
 }
 
 // @public
-export type RequestBodyType = NodeJS.ReadableStream | (() => NodeJS.ReadableStream) | ReadableStream<Uint8Array> | (() => ReadableStream<Uint8Array>) | Blob | ArrayBuffer | ArrayBufferView | FormData | MultipartRequestBody | string | null;
+export type RequestBodyType = NodeJS.ReadableStream | (() => NodeJS.ReadableStream) | ReadableStream<Uint8Array> | (() => ReadableStream<Uint8Array>) | Blob | ArrayBuffer | ArrayBufferView | FormData | string | null;
 
 // @public
 export class RestError extends Error {
@@ -423,13 +425,6 @@ export function setClientRequestIdPolicy(requestIdHeaderName?: string): Pipeline
 
 // @public
 export const setClientRequestIdPolicyName = "setClientRequestIdPolicy";
-
-// @public
-export interface StreamableBlob {
-    size?: number;
-    stream: ReadableStream | NodeJS.ReadableStream | (() => ReadableStream | NodeJS.ReadableStream);
-    type?: string;
-}
 
 // @public
 export function systemErrorRetryPolicy(options?: SystemErrorRetryPolicyOptions): PipelinePolicy;
