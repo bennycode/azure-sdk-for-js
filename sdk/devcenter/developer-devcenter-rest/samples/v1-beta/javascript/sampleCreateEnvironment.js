@@ -124,7 +124,7 @@ async function createEnvironment() {
     throw new Error(environmentCreateResponse.body.error.message);
   }
 
-  const environmentCreatePoller = getLongRunningPoller(client, environmentCreateResponse);
+  const environmentCreatePoller = await getLongRunningPoller(client, environmentCreateResponse);
   const environmentCreateResult = await environmentCreatePoller.pollUntilDone();
   console.log(
     `Provisioned environment with state ${environmentCreateResult.body.provisioningState}.`
@@ -143,7 +143,7 @@ async function createEnvironment() {
     throw new Error(environmentDeleteResponse.body.error.message);
   }
 
-  const environmentDeletePoller = getLongRunningPoller(client, environmentDeleteResponse);
+  const environmentDeletePoller = await getLongRunningPoller(client, environmentDeleteResponse);
   await environmentDeletePoller.pollUntilDone();
 
   console.log("Cleaned up environment successfully.");
